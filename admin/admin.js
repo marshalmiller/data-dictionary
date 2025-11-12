@@ -1,16 +1,12 @@
-// Data Dictionary Application
+// Data Dictionary Application - Admin Interface
 class DataDictionary {
     constructor() {
         this.entries = [];
         this.editingIndex = -1;
-        this.isAuthenticated = false;
         this.init();
     }
 
     init() {
-        // Check authentication state
-        this.checkAuth();
-        
         // Load data from localStorage
         this.loadData();
         
@@ -21,37 +17,11 @@ class DataDictionary {
         this.renderTable();
     }
 
-    checkAuth() {
-        const authState = localStorage.getItem('isAuthenticated');
-        this.isAuthenticated = authState === 'true';
-        this.updateUIForAuth();
-    }
-
-    updateUIForAuth() {
-        const adminElements = document.querySelectorAll('.admin-only');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        
-        adminElements.forEach(el => {
-            el.style.display = this.isAuthenticated ? 'block' : 'none';
-        });
-        
-        loginBtn.style.display = this.isAuthenticated ? 'none' : 'inline-block';
-        logoutBtn.style.display = this.isAuthenticated ? 'inline-block' : 'none';
-        
-        // Re-render table to show/hide action buttons
-        this.renderTable();
-    }
-
     bindEvents() {
         const form = document.getElementById('dictionary-form');
         const searchInput = document.getElementById('search-input');
         const filterType = document.getElementById('filter-type');
         const cancelBtn = document.getElementById('cancel-btn');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const loginForm = document.getElementById('login-form');
-        const cancelLoginBtn = document.getElementById('cancel-login-btn');
         const downloadExcelBtn = document.getElementById('download-excel-btn');
 
         form.addEventListener('submit', (e) => {
@@ -62,45 +32,7 @@ class DataDictionary {
         searchInput.addEventListener('input', () => this.renderTable());
         filterType.addEventListener('change', () => this.renderTable());
         cancelBtn.addEventListener('click', () => this.cancelEdit());
-        
-        loginBtn.addEventListener('click', () => this.showLoginModal());
-        logoutBtn.addEventListener('click', () => this.logout());
-        loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        cancelLoginBtn.addEventListener('click', () => this.hideLoginModal());
         downloadExcelBtn.addEventListener('click', () => this.downloadExcel());
-    }
-
-    showLoginModal() {
-        document.getElementById('login-modal').style.display = 'flex';
-    }
-
-    hideLoginModal() {
-        document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('login-form').reset();
-    }
-
-    handleLogin(e) {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        // Simple authentication - in production, this should be server-side
-        if (username === 'admin' && password === 'admin123') {
-            this.isAuthenticated = true;
-            localStorage.setItem('isAuthenticated', 'true');
-            this.updateUIForAuth();
-            this.hideLoginModal();
-            alert('Login successful!');
-        } else {
-            alert('Invalid credentials. Please try again.');
-        }
-    }
-
-    logout() {
-        this.isAuthenticated = false;
-        localStorage.removeItem('isAuthenticated');
-        this.updateUIForAuth();
-        this.cancelEdit();
     }
 
     handleSubmit() {
@@ -150,7 +82,7 @@ class DataDictionary {
         document.getElementById('cancel-btn').style.display = 'inline-block';
 
         // Scroll to form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
     }
 
     deleteEntry(index) {
@@ -210,15 +142,6 @@ class DataDictionary {
             const actualIndex = this.entries.indexOf(entry);
             const row = document.createElement('tr');
             
-            const actionsHtml = this.isAuthenticated ? `
-                <td>
-                    <div class="actions-cell">
-                        <button class="btn btn-edit" onclick="dictionary.editEntry(${actualIndex})">✏️ Edit</button>
-                        <button class="btn btn-delete" onclick="dictionary.deleteEntry(${actualIndex})">🗑️ Delete</button>
-                    </div>
-                </td>
-            ` : '';
-            
             row.innerHTML = `
                 <td><strong>${this.escapeHtml(entry.term)}</strong></td>
                 <td>${this.escapeHtml(entry.definition)}</td>
@@ -226,7 +149,12 @@ class DataDictionary {
                 <td>${entry.dataType ? `<span class="badge">${this.escapeHtml(entry.dataType)}</span>` : '<span class="text-muted">—</span>'}</td>
                 <td>${entry.inputFormat ? `<code>${this.escapeHtml(entry.inputFormat)}</code>` : '<span class="text-muted">—</span>'}</td>
                 <td>${entry.variations ? this.escapeHtml(entry.variations) : '<span class="text-muted">—</span>'}</td>
-                ${actionsHtml}
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn btn-edit" onclick="dictionary.editEntry(${actualIndex})">✏️ Edit</button>
+                        <button class="btn btn-delete" onclick="dictionary.deleteEntry(${actualIndex})">🗑️ Delete</button>
+                    </div>
+                </td>
             `;
 
             tbody.appendChild(row);
@@ -262,9 +190,9 @@ class DataDictionary {
         this.entries = [
             {
                 term: 'API',
-                definition: 'Application Programming Interface - A set of protocols and tools for building software applications',
+                definition: 'Application Programming Interface - a set of protocols and tools for building software applications',
                 abbreviation: 'API',
-                dataType: 'Other',
+                dataType: 'String',
                 inputFormat: '',
                 variations: 'Application Programming Interface, Web API, REST API',
                 createdAt: new Date().toISOString(),
@@ -273,40 +201,10 @@ class DataDictionary {
             {
                 term: 'Customer ID',
                 definition: 'Unique identifier assigned to each customer in the system',
-                abbreviation: 'CUST_ID',
-                dataType: 'String',
-                inputFormat: 'CUST-######',
-                variations: 'CustID, Customer Identifier, Client ID',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                term: 'Transaction Date',
-                definition: 'The date and time when a transaction was processed',
-                abbreviation: 'TXN_DATE',
-                dataType: 'DateTime',
-                inputFormat: 'YYYY-MM-DD HH:MM:SS',
-                variations: 'Transaction DateTime, TXN Date, Processing Date',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                term: 'Email Address',
-                definition: 'Electronic mail address for communication with users',
-                abbreviation: '',
-                dataType: 'String',
-                inputFormat: 'user@domain.com',
-                variations: 'Email, E-mail, Electronic Mail',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                term: 'Active Status',
-                definition: 'Boolean flag indicating whether an account or record is currently active',
-                abbreviation: '',
-                dataType: 'Boolean',
-                inputFormat: 'true/false or 1/0',
-                variations: 'IsActive, Status, Account Status',
+                abbreviation: 'CID',
+                dataType: 'Integer',
+                inputFormat: '######',
+                variations: 'Customer Identifier, CustID, Client ID',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             }
@@ -314,43 +212,7 @@ class DataDictionary {
         this.saveData();
     }
 
-    exportData() {
-        const dataStr = JSON.stringify(this.entries, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'data-dictionary-export.json';
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
-    importData(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const imported = JSON.parse(e.target.result);
-                if (Array.isArray(imported)) {
-                    this.entries = imported;
-                    this.saveData();
-                    this.renderTable();
-                    alert('Data imported successfully!');
-                } else {
-                    alert('Invalid data format');
-                }
-            } catch (error) {
-                alert('Error importing data: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-
     downloadExcel() {
-        if (!this.isAuthenticated) {
-            alert('You must be logged in to download data.');
-            return;
-        }
-
         // Create CSV data (Excel can open CSV files)
         const headers = ['Term', 'Definition', 'Abbreviation', 'Data Type', 'Input Format', 'Variations', 'Created At', 'Updated At'];
         const csvRows = [headers.join(',')];
