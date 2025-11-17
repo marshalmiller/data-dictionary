@@ -1,10 +1,7 @@
-# Development Docker Compose - builds images locally
 services:
   # Frontend - Static site served by nginx
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/marshalmiller/data-dictionary-frontend:latest
     container_name: data-dictionary-frontend
     ports:
       - "8000:80"
@@ -16,9 +13,7 @@ services:
 
   # Backend API - Flask application
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    image: ghcr.io/marshalmiller/data-dictionary-api:latest
     container_name: data-dictionary-api
     ports:
       - "5001:5001"
@@ -41,6 +36,3 @@ services:
 networks:
   dictionary-network:
     driver: bridge
-
-volumes:
-  dictionary-data:
